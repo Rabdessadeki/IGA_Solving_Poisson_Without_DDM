@@ -42,19 +42,24 @@ def L2_norm_2D(nelements, degree, spans, basis, weights, points, Uh, Uex):
 
 ########################################## Plotting in 2D ###################################################
 def find_span( knots, degree, x ):
+    knots = knots
+    p     = degree
     
-    low  = degree
-    high = len(knots)-1-degree
-    if x <= knots[low ]: mid =  low
-    if x >= knots[high]: mid =  high-1
-    mid = (low+high)//2
-    while x < knots[mid] or x >= knots[mid+1]:
-        if x < knots[mid]:
-            high   = mid
-        else:
-            low    = mid
-        mid    = (low+high)//2
+    low   = p
+    high = len(knots)-1-p
+    if   x <= knots[low ]: mid = low
+    elif x >= knots[high]: mid =  high-1
+    else:
+        mid = (low+high)//2
+        while x < knots[mid] or x >= knots[mid+1]:
+            if x < knots[mid]:
+               high = mid
+            else:
+               low  = mid
+            mid = (low+high)//2
+
     return mid
+    
 def basis_funs( knots, degree, x, span ):
 
     left   = empty( degree  , dtype=float )
