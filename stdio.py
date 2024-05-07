@@ -1,5 +1,5 @@
 #Functions needed from numpy and scipy
-from numpy import kron, zeros, linspace
+from numpy import kron, zeros, linspace, empty
 from scipy.sparse  import csc_matrix, linalg as sla
 
 __Global__= ['Mass_Matrix',
@@ -116,9 +116,9 @@ def assemble_stiffness_2D(spline_number, nelements, degree, spans, basis, weight
                 for j_1 in range(p2+1):
                     j = i_span2 - p2 +  j_1
                     for i_2 in range(p1+1):
-                        l = i_span1 - p1 + i_2
+                        k = i_span1 - p1 + i_2
                         for j_2 in range(p2+1):                            
-                            k = i_span2 - p2 + j_2
+                            l = i_span2 - p2 + j_2
                             punch = 0.0
                             for i_k1 in range(k1):
                                 for i_k2 in range(k2):
@@ -129,7 +129,7 @@ def assemble_stiffness_2D(spline_number, nelements, degree, spans, basis, weight
                                     weitr = weights1[i_e1, i_k1] * weights2[i_e2, i_k2]
                                     punch +=( (bdx_ * bx_ ) +  ( by_* bdy_ ) ) * weitr
                             # matrix[i+k*spline_number1, l+j*spline_number2]+= punch
-                            matrix[i, l , j, k]+= punch
+                            matrix[i, k, j, l]+= punch
     return matrix
     
 ################################## 2D assembling: rhs with homogenou########################################
@@ -274,25 +274,28 @@ def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
     return gh  
 ########################### quasi-interpolation B-spline ####################################################################################
 def find_span( knots, degree, x ):
+    knots = knots
+    p     = degree
     
-    low  = degree
-    high = len(knots)-1-degree
-    if x <= knots[low ]: mid =  low
-    if x >= knots[high]: mid =  high-1
-    mid = (low+high)//2
-    while x < knots[mid] or x >= knots[mid+1]:
-        if x < knots[mid]:
-            high   = mid
-        else:
-            low    = mid
-        mid    = (low+high)//2
+    low   = p
+    high = len(knots)-1-p
+    if   x <= knots[low ]: mid = low
+    elif x >= knots[high]: mid =  high-1
+    else:
+        mid = (low+high)//2
+        while x < knots[mid] or x >= knots[mid+1]:
+            if x < knots[mid]:
+               high = mid
+            else:
+               low  = mid
+            mid = (low+high)//2
+
     return mid
-import numpy as np
 def basis_funs( knots, degree, x, span ):
 
-    left   = np.empty( degree  , dtype=float )
-    right  = np.empty( degree  , dtype=float )
-    values = np.empty( degree+1, dtype=float )
+    left   = empty( degree  , dtype=float )
+    right  = empty( degree  , dtype=float )
+    values = empty( degree+1, dtype=float )
 
     values[0] = 1.0
     for j in range(0,degree):
@@ -307,7 +310,7 @@ def basis_funs( knots, degree, x, span ):
 
     return values
 
-def B_spline_quasi_interpolation(knots, degree, g):
+def L2_projection(knots, degree, g):
     T      = knots
     p      = degree
     nbasis = len(knots) - p - 1
