@@ -152,24 +152,20 @@ def assemble_rhs_with_Non_homogenuous_DBC(f, g_bou, spline_number, nelements, de
             i_span1 = spans1[i_e1]
             i_span2 = spans2[i_e2] 
             values_boun[: , :] = g_bou[i_span1-p1 : i_span1+1 , i_span2-p2 : i_span2 +1 ]
-
             for i_k1 in range(0, k1):
                 x1  = points1[i_e1,i_k1]
                 for i_k2 in range(0, k2):
                     x2 = points2[i_e2, i_k2]
                     S1 = 0.0;S2 = 0.0
                     for i_1 in range(p1+1):
-                        for j_1 in range(p2+1):
-                        
+                        for j_1 in range(p2+1):                        
                             i    = i_span1 - p1 + i_1
                             j    = i_span2 - p2 + j_1
                             bx_j = basis1[i_e1, i_1, 1, i_k1]*basis2[i_e2, j_1, 0, i_k2]
                             by_j = basis1[i_e1, i_1, 0, i_k1]*basis2[i_e2, j_1, 1, i_k2]
-                            g_ij = values_boun[i_1, j_1]
-                            
+                            g_ij = values_boun[i_1, j_1]                            
                             S1  += bx_j * g_ij  #j
-                            S2  += by_j * g_ij#j
-                            
+                            S2  += by_j * g_ij#j                            
                     g_1[i_k1 , i_k2] = S1   
                     g_2[i_k1 , i_k2] = S2 
             for i_1 in range(p1+1):
@@ -181,14 +177,10 @@ def assemble_rhs_with_Non_homogenuous_DBC(f, g_bou, spline_number, nelements, de
                         x1  = points1[i_e1,i_k1]
                         for i_k2 in range(0, k2):
                             x2 = points2[i_e2, i_k2]
-                            values = basis1[i_e1, i_1, 0, i_k1]* basis2[i_e2, j_1, 0, i_k2]
-                                            
-                            bx_i   =  basis1[i_e1, i_1, 1, i_k1]* basis2[i_e2, j_1, 0, i_k2]
-                            
+                            values = basis1[i_e1, i_1, 0, i_k1]* basis2[i_e2, j_1, 0, i_k2]                                           
+                            bx_i   =  basis1[i_e1, i_1, 1, i_k1]* basis2[i_e2, j_1, 0, i_k2]                          
                             by_i   =  basis1[i_e1, i_1, 0, i_k1]* basis2[i_e2, j_1, 1, i_k2]
-                            
-                            weitr = weights1[i_e1, i_k1] * weights2[i_e2, i_k2]
-                            
+                            weitr = weights1[i_e1, i_k1] * weights2[i_e2, i_k2]                        
                             saved+=  (values *f( x1 , x2) - (g_1[i_k1 , i_k2] * bx_i + g_2[i_k1 , i_k2]* by_i) )* weitr     
                     # rhs[i+j*spline_number]+=saved
                     rhs[i,j]+=saved
@@ -272,7 +264,7 @@ def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
     lu    = sla.splu(csc_matrix(matrix))
     gh    = lu.solve(rhs) 
     return gh  
-########################### quasi-interpolation B-spline ####################################################################################
+########################### B-spline L2 projection ####################################################################################
 def find_span( knots, degree, x ):
     knots = knots
     p     = degree

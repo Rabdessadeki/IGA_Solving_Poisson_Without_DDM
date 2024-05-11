@@ -39,7 +39,43 @@ def L2_norm_2D(nelements, degree, spans, basis, weights, points, Uh, Uex):
                     wvol = weights1[i_e1, i_k1]*weights2[i_e2, i_k2]
                     v += wvol*(Uex(x1, x2)-w)**2
     return sqrt(v)
+######################################### H1_Norm#############################################################
+def H1_norm_2D(nelements, degree, spans, basis, weights, points, Uh, dUx, dUy, Uex):
 
+    # ... sizes
+    ne1,ne2              = nelements
+    p1,p2                = degree
+    spans1, spans2       = spans
+    basis1, basis2       = basis
+    weights1, weights2   = weights
+    points1, points2     = points
+    
+    k1    = weights1.shape[1]
+    k2    = weights2.shape[1]
+    v     = 0.0
+    for i_e1 in range(ne1):
+        i_span_1 = spans1[i_e1] 
+        for i_e2 in range(ne2):
+            i_span_2 = spans2[i_e2]
+   
+            for i_k1 in range(k1):
+                x1 = points1[i_e1, i_k1]
+                for i_k2 in range(k2):
+                    x2 =  points2[i_e2, i_k2]
+                    w1 = 0. ; w2 = 0.; w3 = 0.
+                    for i_1 in range(p1+1):
+                        i = i_span_1 - p1 + i_1
+                        for j_1 in range(p2+1):
+                            j = i_span_2 - p2 + j_1
+                            bxi_i  = basis1[i_e1, i_1, 0, i_k1]* basis2[i_e2, j_1, 0, i_k2]
+                            bdx_i  = basis1[i_e1, i_1, 1, i_k1]* basis2[i_e2, j_1, 0, i_k2]
+                            bdy_i  = basis1[i_e1, i_1, 0, i_k1]* basis2[i_e2, j_1, 1, i_k2]
+                            w1    += bxi_i*Uh[i,j]
+                            w2    += bdx_i*Uh[i,j]       
+                            w3    += bdy_i*Uh[i,j]                            
+                    wvol = weights1[i_e1, i_k1] * weights2[i_e2, i_k2]
+                    v += wvol * (Uex(x1, x2)-w1)**2 +  wvol * (dUx(x1, x2)-w2)**2 + wvol * (dUy(x1, x2)-w3)**2
+    return sqrt(v)
 ########################################## Plotting in 2D ###################################################
 def find_span( knots, degree, x ):
     knots = knots
