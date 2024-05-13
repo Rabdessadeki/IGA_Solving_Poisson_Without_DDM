@@ -1,6 +1,7 @@
 #Functions needed from numpy and scipy
-from numpy import kron, zeros, linspace, empty
+from numpy import kron, zeros, linspace, empty, double
 from scipy.sparse  import csc_matrix, linalg as sla
+from pyccel.decorators import types         
 
 __Global__= ['Mass_Matrix',
              'Stiffness_Matrix',
@@ -11,7 +12,7 @@ __Global__= ['Mass_Matrix',
 ]
 
 #########################Assemble stiffness and mass matrix 1D#######################################
-
+@types('int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
 def Mass_Matrix(nelements, degree, spans, basis, weights, points, matrix):
     k1          = weights.shape[1]
     ne          = nelements
@@ -33,7 +34,7 @@ def Mass_Matrix(nelements, degree, spans, basis, weights, points, matrix):
                 matrix[i , j] += v0
     return matrix
     
-
+@types('int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
 def Stiffness_Matrix(nelements, degree, spans, basis, weights, points, matrix):
     k1          = weights.shape[1]
     ne          = nelements
@@ -56,8 +57,8 @@ def Stiffness_Matrix(nelements, degree, spans, basis, weights, points, matrix):
     return matrix
 
 #########################Assemble rhs 1D non_homogenenous boundary #######################################
-
-def assemble_rhs(f, nelements, degree, spans, basis, weights, points, vectu, rhs):
+@types('double', 'int', 'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:]', 'double[:]')
+def assemble_rhs_1d_with_Non_homg_Dirichlet(f, nelements, degree, spans, basis, weights, points, vectu, rhs):
 
     ne1       = nelements
     p1        = degree
@@ -96,15 +97,8 @@ def assemble_rhs(f, nelements, degree, spans, basis, weights, points, vectu, rhs
     
 ################################## 2D assembling: stiffness######################################## 
 
-def assemble_stiffness_2D(spline_number, nelements, degree, spans, basis, weights, points, matrix):
-
-    ne1, ne2                       = nelements
-    p1, p2                         =  degree 
-    spans1, spans2                 = spans
-    spline_number1, spline_number2 = spline_number
-    basis1, basis2                 = basis
-    weights1, weights2             = weights
-    points1, points2               = points
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:,:,:]')
+def assemble_stiffness_2D(ne1, ne2, p1, p2,  spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, matrix):
     k1                             = weights1.shape[1]
     k2                             = weights2.shape[1]
     for i_e1 in range(ne1):
@@ -133,20 +127,15 @@ def assemble_stiffness_2D(spline_number, nelements, degree, spans, basis, weight
     return matrix
     
 ################################## 2D assembling: rhs with homogenou########################################
+@types('double', 'double[:,:]','int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]')
 
-def assemble_rhs_with_Non_homogenuous_DBC(f, g_bou, spline_number, nelements, degree, spans, basis, weights, points, rhs):
-    ne1, ne2                = nelements
-    p1, p2                  =  degree 
-    spline_number           = spline_number
-    spans1, spans2          = spans
-    basis1, basis2          = basis
-    weights1, weights2      = weights
-    points1, points2        = points
+def assemble_rhs_with_Non_homogenuous_DBC(f, g_bou, ne1, ne2, p1, p2,  spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, rhs):
+    
     k1                      = weights1.shape[1]
     k2                      = weights2.shape[1]
-    g_1                     = zeros((k1,k2))
-    g_2                     = zeros((k1,k2))
-    values_boun             = zeros((p1+1,p2+1))
+    g_1                     = zeros((k1,k2), dtype = double)
+    g_2                     = zeros((k1,k2), dtype = double)
+    values_boun             = zeros((p1+1,p2+1),dtype = double)
     for i_e1 in range(0, ne1):
         for i_e2 in range(0, ne2):
             i_span1 = spans1[i_e1]
@@ -187,15 +176,11 @@ def assemble_rhs_with_Non_homogenuous_DBC(f, g_bou, spline_number, nelements, de
     return rhs
     
 ############################################BSpline Least Square approximation#############################################################
+@types('int', 'double' ,'double[:,:]',  'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]')
 
-def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
+def B_Spline_Least_Square(ne, g, p, spans, basis, weights, points):
     # ... sizes
-    ne                   = nelements
-    p                    = degree
-    spans                = spans
-    basis                = basis
-    weights              = weights
-    points               = points
+   
     k1                   = weights.shape[1]
     rhs                  = zeros( ne + p )
     matrix = zeros((ne + p, ne + p ))
@@ -225,15 +210,11 @@ def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
     gh    = lu.solve(rhs) 
     return gh  
 ########################### Least Square B-spline ####################################################################################
+@types('int', 'double' ,'double[:,:]',  'int', 'int[:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]')
 
-def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
+def B_Spline_Least_Square(ne, g, p, spans, basis, weights, points):
     # ... sizes
-    ne                   = nelements
-    p                    = degree
-    spans                = spans
-    basis                = basis
-    weights              = weights
-    points               = points
+    
     k1                   = weights.shape[1]
     rhs                  = zeros( ne + p )
     matrix               = zeros((ne + p, ne + p ))
@@ -265,10 +246,9 @@ def B_Spline_Least_Square(nelements, g, degree, spans, basis, weights, points):
     gh    = lu.solve(rhs) 
     return gh  
 ########################### B-spline L2 projection ####################################################################################
-def find_span( knots, degree, x ):
-    knots = knots
-    p     = degree
-    
+@types('double[:]', 'int', 'double')
+def find_span( knots, p, x ):
+  
     low   = p
     high = len(knots)-1-p
     if   x <= knots[low ]: mid = low
@@ -283,11 +263,12 @@ def find_span( knots, degree, x ):
             mid = (low+high)//2
 
     return mid
+@types('double[:]', 'int', 'double', 'int')
 def basis_funs( knots, degree, x, span ):
 
-    left   = empty( degree  , dtype=float )
-    right  = empty( degree  , dtype=float )
-    values = empty( degree+1, dtype=float )
+    left   = empty( degree  , dtype=double )
+    right  = empty( degree  , dtype=double )
+    values = empty( degree+1, dtype=double )
 
     values[0] = 1.0
     for j in range(0,degree):
@@ -302,16 +283,16 @@ def basis_funs( knots, degree, x, span ):
 
     return values
 
-def L2_projection(knots, degree, g):
-    T      = knots
-    p      = degree
+@types('double[:]', 'int', 'double')
+def L2_projection(knots, p, g):
+   
     nbasis = len(knots) - p - 1
     X      = linspace(knots[0], knots[-p], nbasis)
     matrix      = zeros((nbasis, nbasis))
     G      = zeros(nbasis)
     for i ,ix in enumerate(X):
-        i_span    = find_span(T, p, ix)
-        values_xi = basis_funs(T, p,  ix, i_span)
+        i_span    = find_span(knots, p, ix)
+        values_xi = basis_funs(knots, p,  ix, i_span)
         matrix[i,i_span- p: i_span+1 ] = values_xi[:]
         G[i]                   = g(ix)
     lu    = sla.splu(csc_matrix(matrix))

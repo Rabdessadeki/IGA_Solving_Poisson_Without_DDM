@@ -1,21 +1,15 @@
-from numpy import linspace, meshgrid, zeros, sqrt, empty
-
-
+from numpy import linspace, meshgrid, zeros, sqrt, empty, double
+from pyccel.decorators import types  
 
 __all__=['L2_norm_2D',
          'plot_field_2D'
 ]
 ################################### L2_norm ##############################
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double')
 
-def L2_norm_2D(nelements, degree, spans, basis, weights, points, Uh, Uex):
+def L2_norm_2D(ne1, ne2, p1 ,p2, spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, Uh, Uex):
 
-    # ... sizes
-    ne1,ne2              = nelements
-    p1,p2                = degree
-    spans1, spans2       = spans
-    basis1, basis2       = basis
-    weights1, weights2   = weights
-    points1, points2     = points
+    
     
     k1    = weights1.shape[1]
     k2    = weights2.shape[1]
@@ -40,15 +34,10 @@ def L2_norm_2D(nelements, degree, spans, basis, weights, points, Uh, Uex):
                     v += wvol*(Uex(x1, x2)-w)**2
     return sqrt(v)
 ######################################### H1_Norm#############################################################
-def H1_norm_2D(nelements, degree, spans, basis, weights, points, Uh, dUx, dUy, Uex):
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]','double[:,:]','double')
+def H1_norm_2D(ne1, ne2, p1 ,p2, spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, Uh, dUx, dUy, Uex):
 
-    # ... sizes
-    ne1,ne2              = nelements
-    p1,p2                = degree
-    spans1, spans2       = spans
-    basis1, basis2       = basis
-    weights1, weights2   = weights
-    points1, points2     = points
+   
     
     k1    = weights1.shape[1]
     k2    = weights2.shape[1]
@@ -77,6 +66,8 @@ def H1_norm_2D(nelements, degree, spans, basis, weights, points, Uh, dUx, dUy, U
                     v += wvol * (Uex(x1, x2)-w1)**2 +  wvol * (dUx(x1, x2)-w2)**2 + wvol * (dUy(x1, x2)-w3)**2
     return sqrt(v)
 ########################################## Plotting in 2D ###################################################
+
+@types('double[:]', 'int', 'double')
 def find_span( knots, degree, x ):
     knots = knots
     p     = degree
@@ -96,6 +87,7 @@ def find_span( knots, degree, x ):
 
     return mid
     
+@types('double[:]', 'int', 'double', 'int')   
 def basis_funs( knots, degree, x, span ):
 
     left   = empty( degree  , dtype=float )
@@ -115,8 +107,8 @@ def basis_funs( knots, degree, x, span ):
 
     return values
 
-
-def plot_field_2D(knots, degree, u, nx = 101, ny=101):
+@types('double[:]', 'double[:]', 'int', 'int', 'double[:,:]', 'int', 'int')
+def plot_field_2D(knots1, knots2, degree1, degree2, u, nx = 101, ny=101):
 
     knots1, knots2 = knots
     degree1, degree2 = degree
