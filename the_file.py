@@ -8,7 +8,7 @@ from stdio     import B_Spline_Least_Square, assemble_stiffness_2D, L2_projectio
 from equipment import L2_norm_2D, H1_norm_2D, plot_field_2D
 from scipy.sparse.linalg import cg
 from scipy.linalg import norm, inv, solve, det,inv
-from numpy import zeros, ones, linspace,double,float64, cos,array, dot, zeros_like, asarray,floor,arange,append,random,sqrt, int32, meshgrid, kron,sin
+from numpy import zeros, ones, linspace,double,float64, cos,array, dot, zeros_like, asarray,floor,arange,append,random,sqrt, int32, meshgrid,sin
 import  matplotlib.pyplot as plt
 from scipy.sparse        import csr_matrix
 from scipy.sparse        import csc_matrix, linalg as sla
@@ -23,6 +23,8 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d.axes3d import get_test_data
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from pyccel.decorators import types
+                   
+from scipy.sparse import kron as spkron
 
 
 
@@ -81,9 +83,26 @@ def full_table_2d(a, b, c, d, my_elements, my_degree):
             points2, weights2       = quadrature_grid(grid2,U2,W2)
             
             basis1, basis2          = basis_ders_on_quad_grid(knots1, p1, points1, nders, normalize=False),basis_ders_on_quad_grid(knots2, p2, points2, nders, normalize=False)
-            stiffness     = zeros((nbasis1, nbasis2, nbasis1, nbasis2))
-            stiffness     = assemble_stiffness_2D(nelements1, nelements2, p1, p2, spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, stiffness)
-            stiffness     = tensor_to_matrix(stiffness[1:-1,1:-1,1:-1,1:-1], nbasis1-2, nbasis2-2)
+            #stiffness     = zeros((nbasis1, nbasis2, nbasis1, nbasis2))
+            #stiffness     = assemble_stiffness_2D(nelements1, nelements2, p1, p2, spans1, spans2, basis1, basis2, weights1, weights2, points1, points2, stiffness)
+            #stiffness     = tensor_to_matrix(stiffness[1:-1,1:-1,1:-1,1:-1], nbasis1-2, nbasis2-2)
+            stiffness1      = zeros((nbasis1,nbasis2))
+            stiffness2      = zeros((nbasis1,nbasis2))
+            mass1           = zeros((nbasis1,nbasis2))
+            mass2           = zeros((nbasis1,nbasis2))
+            stiffness1      = Stiffness_Matrix(nelements1, p1, spans1, basis1, weights1, points1, stiffness1)
+            stiffness2      = Stiffness_Matrix(nelements2, p2, spans2, basis2, weights2, points2, stiffness2)
+            mass1           = Mass_Matrix(nelements1, p1, spans1, basis1, weights1, points1, mass1)
+            mass2           = Mass_Matrix(nelements2, p2, spans2, basis2, weights2, points2, mass2)
+            C1              = spkron(csr_matrix(stiffness1[1:-1,1:-1]),csr_matrix(mass2[1:-1,1:-1]))
+
+            C2              = spkron(csr_matrix(mass1[1:-1,1:-1]), csr_matrix(stiffness2[1:-1,1:-1]))
+# C1              = kron(stiffness1,mass2)
+# C2              = kron(mass1,stiffness2)
+
+            
+            stiffness = C1+C2
+            
             rhs1          = zeros((nbasis1,nbasis2))
             gx0_h         = L2_projection(knots1, p1, gx0)
             gx1_h         = L2_projection(knots1, p1, gx1)
@@ -129,9 +148,9 @@ def number_pow_mod_2(nmax):
         q  = q//2
     return g
 #  Please wait until the program finished it take a few minutes 
-Ncells_max        = 64  
+Ncells_max        = 256
 N_2_in_Ncells_max = number_pow_mod_2(Ncells_max)
-max_deg           = 6
+max_deg           = 5                 
 my_elements       = [2**i for i in range(4, N_2_in_Ncells_max+1)]
 my_degrees        = [i for i in range(2, max_deg+1)]
 L2, H1            = full_table_2d(0., 1., 0., 1., my_elements, my_degrees)
@@ -154,7 +173,7 @@ for j in range(len(my_degrees)):
     plt.plot([2**(2*i) for i in range(4, N_2_in_Ncells_max+1)], ML2norm[:,j],'*-')        
 plt.yscale('log')
 plt.xscale('log')
-plt.legend(['$p=2$', '$p=3$', '$p=4$'])
+plt.legend(['$p=2$', '$p=3$', '$p=4$','$p=5$'])
 plt.xlabel('Ncells ')
 plt.ylabel('L2-norm')
 plt.grid()
